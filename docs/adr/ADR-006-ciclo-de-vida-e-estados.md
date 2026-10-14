@@ -1,15 +1,15 @@
 # ADR-006 — Ciclo de vida e estados
 
-- **Status:** Pendente (Q-04/Q-05/Q-08/Q-14/Q-15)
+- **Status:** Aceito para proteção técnica da agenda; semântica de produto complementar permanece condicionada
 - **Data:** 2026-10-14
 
 ## Contexto
 
-As fontes declaram gerenciamento de reservas, aprovação especial, validação docente e manutenção, sem definir estados, transições, cancelamento, quais registros ocupam agenda ou efeitos de aprovação/manutenção.
+As fontes declaram gerenciamento de reservas e aprovação especial sem um catálogo de estados. Para que a proteção concorrente seja executável, é necessário definir estados técnicos bloqueantes, sem transformar aprovação especial em pré-condição global de reserva.
 
 ## Problema
 
-Como representar ciclo de vida sem introduzir estados ou efeitos que não foram aprovados?
+Como representar estados mínimos para proteger a agenda e definir quais transições precisam revalidar ocupação?
 
 ## Requisitos relacionados
 
@@ -17,17 +17,19 @@ REQ-01/REQ-02/REQ-03/REQ-04; RF-02/RF-07/RF-08/RF-09/RF-10/RF-11; Q-04/Q-05/Q-08
 
 ## Alternativas
 
-1. Estado único de reserva com decisão de aprovação registrada separadamente.
-2. Ciclo explícito com estados de solicitação, decisão e encerramento.
-3. Outra máquina de estados aprovada pelo negócio.
+1. Estado mínimo `PENDENTE`, `APROVADA`, `REJEITADA` e `CANCELADA`, com ocupação explícita.
+2. Estado único e decisão de aprovação não relacionada à agenda.
+3. Não registrar estado persistido.
 
 ## Decisão
 
-Pendente de definição e aprovação do produto. Nenhum rótulo, transição, condição de ocupação ou regra de cancelamento é selecionado. Quando aprovado, modelar transições explicitamente no domínio; rejeitar transições inválidas e persistir o resultado atomicamente.
+Adotar os estados mínimos `PENDENTE`, `APROVADA`, `REJEITADA` e `CANCELADA`. `PENDENTE` e `APROVADA` ocupam agenda e bloqueiam novos conflitos; `REJEITADA` e `CANCELADA` não ocupam. Uma transição de estado para ocupante deve bloquear os recursos em ordem determinística e revalidar conflitos na mesma transação antes de gravar. Uma transição para não ocupante libera a ocupação no commit, mantendo os locks até então. Aprovação de solicitação especial é uma decisão distinta e não é pré-condição para toda reserva; seu vínculo a estados ou efeitos de negócio não foi inferido. Transições não listadas são negadas até decisão de produto.
+
+Manutenção e bloqueio também adquirem locks dos recursos e usam a política transacional de ADR-003; impacto sobre reservas já existentes continua conforme Q-08.
 
 ## Justificativa
 
-O estado define disponibilidade e, portanto, a invariante central. Aprovação não pode ser presumida pré-condição de reserva; manutenção não pode cancelar ou alterar reservas existentes por inferência.
+O estado define disponibilidade e, portanto, a invariante central. A aprovação especial não é presumida como pré-condição geral. Não se cancela nem altera uma reserva existente automaticamente em razão de manutenção. O intervalo semiaberto `[início, fim)` segue ADR-003.
 
 ## Consequências positivas
 
@@ -36,8 +38,8 @@ O estado define disponibilidade e, portanto, a invariante central. Aprovação n
 
 ## Consequências negativas
 
-- RF-02/RF-07/RF-08/RF-10 não ficam prontos para critérios finais ou implementação.
-- Modelo de banco e constraint de agenda não podem ser fechados.
+- Regras de negócio de aprovação especial, cancelamento por ator/prazo e impacto de manutenção permanecem incompletas.
+- Não se presume que este catálogo resolva toda a semântica de Q-04/Q-05/Q-08/Q-14/Q-15.
 
 ## Riscos
 
@@ -46,4 +48,4 @@ O estado define disponibilidade e, portanto, a invariante central. Aprovação n
 
 ## Estratégia de validação
 
-Obter tabela aprovada de estados, ator permitido, pré-condição, efeito na ocupação, terminalidade e concorrência. Gerar testes parametrizados para todas as transições permitidas/proibidas e testar falha/concorrência no banco.
+Gerar testes parametrizados para cada transição implementada e não permitida; testar com PostgreSQL/Testcontainers que estados bloqueantes/não bloqueantes preservam a agenda, inclusive em transições concorrentes e após rollback. Confirmar que aprovação especial não é interpretada como condição global de reserva.

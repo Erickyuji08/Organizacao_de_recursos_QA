@@ -1,15 +1,15 @@
 # ADR-004 — Fronteiras transacionais
 
-- **Status:** Proposto (não aprovado)
+- **Status:** Aceito
 - **Data:** 2026-10-14
 
 ## Contexto
 
-Uma operação pode envolver a gravação da reserva e alocações correlatas; manutenção também interage com a agenda. Auditoria de produto é condicional a Q-11. A aplicação é proposta como monólito modular, com PostgreSQL candidato.
+Uma operação pode envolver a gravação da reserva e de seus vínculos com recursos; manutenção e aprovação também interagem com a agenda. A aplicação é um monólito modular e PostgreSQL é o banco adotado. Auditoria de negócio participa da mesma transação quando exigida pelo evento registrado, conforme ADR-007.
 
 ## Problema
 
-Como evitar commits parciais entre gravações de uma mesma operação sem manter transações abertas durante integrações externas?
+Como garantir atomicidade de uma operação de aplicação sem manter transações abertas durante trabalho externo?
 
 ## Requisitos relacionados
 
@@ -24,11 +24,11 @@ REQ-01/REQ-03/REQ-04; RF-09/RF-10/RF-11/RF-14; Q-04/Q-05/Q-08/Q-11.
 
 ## Decisão
 
-Propor fronteira transacional no caso de uso que altera uma invariante de negócio. Reserva e ocupações/alocações que forem parte da mesma decisão devem gravar/confirmar atomicamente. Manutenção deve coordenar a mesma proteção de agenda conforme Q-08. Se Q-11 tornar auditoria obrigatória, o evento e a alteração auditada participam da mesma transação local. Não incluir serviço remoto na transação.
+Delimitar transações na camada de aplicação/serviço por operação de escrita. A criação ou aprovação de reserva, os vínculos aos recursos e os eventos de auditoria correspondentes são confirmados ou revertidos em conjunto. Alterações de estado que ativem/desativem ocupação usam a mesma proteção e revalidação da agenda definida em ADR-003. Não executar chamadas HTTP, filas ou outro trabalho remoto dentro da transação.
 
 ## Justificativa
 
-Transação local corresponde ao monólito e evita estado parcialmente persistido. Commit distribuído e outbox seriam complexidade sem integração aprovada. A transação não substitui uma constraint ou estratégia correta contra corridas.
+Transação local corresponde ao monólito e evita estado parcialmente persistido. A transação, isoladamente, não evita corridas; deve combinar-se com locks de recurso e revalidação em ADR-003.
 
 ## Consequências positivas
 
@@ -39,7 +39,7 @@ Transação local corresponde ao monólito e evita estado parcialmente persistid
 ## Consequências negativas
 
 - A unidade de trabalho pode aumentar contenção se incluir operações demais.
-- Auditoria obrigatória e atômica pode abortar negócio quando a auditoria falha.
+- Falha ao gravar auditoria exigida aborta a operação de negócio para não perder rastreabilidade.
 - Mudanças de estado e locks requerem tratamento de concorrência.
 
 ## Riscos
@@ -50,4 +50,4 @@ Transação local corresponde ao monólito e evita estado parcialmente persistid
 
 ## Estratégia de validação
 
-Testar rollback/commit usando PostgreSQL Testcontainers e injeção de falha em cada gravação; provar atomicidade de reserva/alocações, manutenção e, se Q-11 exigir, evento de auditoria. Revisar limites transacionais por caso de uso.
+Testar commit e rollback com PostgreSQL Testcontainers, injetando falha entre gravações correlatas; verificar que estado de reserva, vínculos e auditoria persistem atomicamente. Testes concorrentes usam conexões independentes e validam os locks definidos em ADR-003.

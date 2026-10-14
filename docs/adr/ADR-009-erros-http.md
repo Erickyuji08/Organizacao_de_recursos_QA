@@ -1,15 +1,15 @@
 # ADR-009 — Tratamento de erros HTTP
 
-- **Status:** Proposto (não aprovado)
+- **Status:** Aceito para o contrato planejado da API
 - **Data:** 2026-10-14
 
 ## Contexto
 
-API HTTP é uma opção arquitetural, não contrato de interface aprovado. A sequência sugere 409 para conflito como candidato; Q-09 não escolhe resultado por requisição. Códigos para entrada inválida, autenticação e autorização também não foram definidos.
+API REST é o canal de integração aprovado para o backend. O contrato de endpoints e respostas ainda será implementado; a semântica central de conflito é coberta por ADR-003.
 
 ## Problema
 
-Como comunicar erros sem expor detalhes internos nem converter erro técnico em sucesso ou em regra de negócio não aprovada?
+Como padronizar validação, autorização, conflito e falha inesperada, sem vazar detalhes internos?
 
 ## Requisitos relacionados
 
@@ -17,17 +17,19 @@ RF-01/RF-02/RF-09/RF-14; RNF-04; Q-09/Q-10.
 
 ## Alternativas
 
-1. Respostas específicas ad hoc por controller.
-2. Mapeamento centralizado de erros de domínio/aplicação/infraestrutura para um envelope HTTP estável.
-3. Propagar exceções/stack traces de infraestrutura.
+1. Respostas ad hoc por controller.
+2. Mapeamento centralizado para Problem Details (RFC 9457).
+3. Propagar exceções ou stack traces de infraestrutura.
 
 ## Decisão
 
-Propor mapeador centralizado na borda HTTP, com categorias distintas para validação, conflito de domínio, autenticação/autorização e falha inesperada. 409 é candidato para conflito de integridade, sujeito a Q-09; 400 versus 422 e 403 versus 404 ficam pendentes de contrato/Q-10. Nunca expor SQL, stack trace, nomes internos de constraints ou segredos.
+Usar rotas REST versionadas sob `/api/v1`, DTOs de entrada/saída e validação de entrada na borda, mantendo regras nos casos de uso/domínio. Mapear exceções centralmente para `application/problem+json` (RFC 9457), com tipo, título, status, detalhe seguro e identificador de correlação; nunca incluir SQL, stack trace, nomes internos de constraints, segredos, tokens ou dados pessoais desnecessários.
+
+Usar `400` para entrada inválida, `401` para autenticação ausente/inválida, `403` para papel sem permissão, `404` para recurso inexistente ou fora do escopo quando revelar existência não for apropriado, `409` para conflito de agenda/estado e `500` genérico para falha inesperada. Erro técnico de banco só vira `409` quando classificado como violação de conflito; não mascarar indisponibilidade ou defeitos como conflito. Listagens que precisem de paginação usam parâmetros `page` e `size`, ordenação estável e limite máximo documentado no contrato implementado. Documentar API com OpenAPI/Swagger quando as dependências compatíveis forem adicionadas; a documentação não afirma endpoints não implementados.
 
 ## Justificativa
 
-Mapeamento único facilita previsibilidade e testes. A decisão não deve eleger vencedor ou estado concorrente, que é política de produto.
+Mapeamento único torna clientes e testes previsíveis. `409` comunica que o pedido não pode ser confirmado contra o estado atual, sem afirmar qual pedido concorrente tem prioridade.
 
 ## Consequências positivas
 
@@ -37,8 +39,8 @@ Mapeamento único facilita previsibilidade e testes. A decisão não deve eleger
 
 ## Consequências negativas
 
-- Contrato precisa ser aprovado antes de clientes dependerem dele.
-- Erros de persistência precisam ser classificados sem mascarar falhas reais.
+- Clientes devem tratar erros Problem Details e não depender de mensagens internas.
+- A classificação de exceções de persistência deve distinguir conflitos reais de falhas técnicas.
 
 ## Riscos
 
@@ -48,4 +50,4 @@ Mapeamento único facilita previsibilidade e testes. A decisão não deve eleger
 
 ## Estratégia de validação
 
-Definir contrato de erro junto à API; testar mapeamento por MockMvc para entradas inválidas, conflito de domínio, acesso negado e falha inesperada. Verificar que respostas não contêm dados técnicos sensíveis e que cada conflito corresponde à política aprovada.
+Testar via MockMvc os códigos e tipos Problem Details para validação, autenticação, autorização, conflito e falha inesperada. Verificar ausência de dados técnicos/sensíveis e que falhas técnicas não sejam convertidas em `409`.
