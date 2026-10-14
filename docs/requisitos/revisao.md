@@ -4,7 +4,9 @@
 **Branch revisada:** `docs/prd-requisitos`
 **Natureza:** revisão documental consultiva; não é QA gate formal de story.
 
-**Resultado resumido:** a documentação apresenta escopo e perfis rastreáveis às fontes REQ-01..REQ-04 e evita declarar como aprovadas regras ainda não decididas. A maturidade é **insuficiente para baseline de arquitetura ou implementação** dos comportamentos centrais: semântica temporal, conflitos por recurso, concorrência, estados, permissões, efeitos de aprovação e manutenção ainda dependem de decisões. Os critérios condicionais não permitem testes de aceite conclusivos até que as perguntas correspondentes tenham respostas aprovadas. Esta conclusão é uma avaliação da documentação, não uma aprovação ou reprovação formal de entrega.
+**Nota de atualização:** esta revisão é um snapshot anterior à ratificação arquitetural de 2026-10-14. As conclusões sobre ausência de baseline técnico são históricas: ADRs foram ratificados depois. A ratificação não aprova o PRD como especificação funcional completa nem fecha as lacunas de negócio abaixo.
+
+**Resultado resumido:** a documentação apresenta escopo e perfis rastreáveis às fontes REQ-01..REQ-04 e evita declarar como aprovadas regras ainda não decididas. As lacunas funcionais de semântica temporal, conflitos por recurso, ciclo de vida completo, permissões detalhadas, efeitos de aprovação e manutenção continuam impedindo testes de aceite conclusivos para as funcionalidades correspondentes. As decisões técnicas posteriores definem intervalo semiaberto, estados técnicos mínimos e protocolo concorrente, sem resolver essas regras de produto. Esta conclusão é uma avaliação documental consultiva, não uma aprovação ou reprovação formal de entrega.
 
 Esta revisão relê integralmente `docs/prd.md`, `docs/rtm.md`, `docs/requisitos/regras-negocio.md`, `docs/requisitos/requisitos-nao-funcionais.md`, `docs/requisitos/casos-de-uso.md`, as três personas, `docs/stakeholders.md` e `docs/visao-geral.md`. A perspectiva atribuída a cada persona é **desk review dos documentos**; não representa entrevistas, pesquisa ou validação com pessoas reais.
 

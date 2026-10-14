@@ -1,6 +1,6 @@
 # C4 — Contexto do sistema
 
-**Status:** proposta arquitetural; atores e capacidades vêm de REQ-01 a REQ-04. O canal de interação não foi especificado. Não há integrações externas aprovadas. Autenticação/autorização depende de Q-10 ([ADR-005](../adr/ADR-005-autenticacao-e-autorizacao.md)); notificações/integrações dependem de Q-13 ([ADR-008](../adr/ADR-008-notificacoes-e-integracoes.md)).
+**Status:** contexto lógico alinhado aos ADRs ratificados; não representa software já implementado. A API REST é o canal decidido para o backend; interface visual e integrações externas não fazem parte do baseline. Segurança JWT e autorização seguem [ADR-005](../adr/ADR-005-autenticacao-e-autorizacao.md); notificações dependem de decisão futura conforme [ADR-008](../adr/ADR-008-notificacoes-e-integracoes.md).
 
 ```mermaid
 C4Context
@@ -15,4 +15,4 @@ C4Context
     Rel(administrador, org, "Gerencia cadastros e períodos")
 ```
 
-**Leitura:** usuário e sistema são os únicos elementos conhecidos. Interface web/mobile, identidade externa, correio, calendário e demais integrações não foram declarados e não são representados como sistemas existentes. A autorização dos perfis depende de Q-10; ações de aprovação e manutenção não implicam, por si, efeito sobre a ocupação (Q-05/Q-08).
+**Leitura:** usuário e sistema são os únicos elementos conhecidos. Interface web/mobile, identidade externa, correio, calendário e demais integrações não são representados como sistemas existentes. Papéis e propriedade são verificados no servidor. Aprovação especial não é condição global para reserva; manutenção não cancela reservas automaticamente e segue a política de produto pendente em Q-08.

@@ -1,15 +1,15 @@
 # ADR-008 — Notificações e integrações externas
 
-- **Status:** Pendente (Q-13)
+- **Status:** Aceito: fora do baseline
 - **Data:** 2026-10-14
 
 ## Contexto
 
-Não há integração externa aprovada no PRD ou nos diagramas. Notificações são uma pergunta aberta. Canal, eventos, destinatários, criticidade, privacidade e necessidade de entrega não foram definidos.
+Não há integração externa ou notificação exigida no PRD. Q-13 registra notificações como possibilidade não decidida, sem evento, destinatário, canal ou nível de garantia.
 
 ## Problema
 
-Como evitar que uma integração não requerida comprometa consistência ou disponibilidade do fluxo de reservas?
+Como evitar acoplamento externo e falhas desnecessárias no fluxo transacional do baseline?
 
 ## Requisitos relacionados
 
@@ -17,17 +17,16 @@ Q-13; RF-02/RF-10/RF-12/RF-13 são fluxos potencialmente afetados, não requisit
 
 ## Alternativas
 
-1. Não implementar notificações/integrações externas.
-2. Chamada síncrona para um provedor, se uma dependência imediata for aprovada.
-3. Entrega assíncrona por outbox/worker com política de retries, se atraso for aceitável.
+1. Não incluir notificações nem integrações externas no baseline.
+2. Integrar apenas após requisito de produto e contrato aprovados.
 
 ## Decisão
 
-Pendente de Q-13. Não criar provedor, fila, outbox ou worker no baseline. Se integração for aprovada, escolher o padrão após definir evento, garantias, destinatário e falha aceitável; não manter transação de reserva aberta durante chamada remota. Relatórios dependem de Q-12 e não são tratados como integração neste ADR.
+Não incluir provedor, fila, outbox ou worker no baseline. Reabrir esta decisão somente após aprovação de evento, destinatário, canal, dados, garantia de entrega e comportamento em falha. Se aprovada, a integração não manterá transação de reserva aberta durante chamada remota. Relatórios permanecem sob Q-12 e não são tratados como integração neste ADR.
 
 ## Justificativa
 
-Nenhum sistema externo é declarado. Síncrono reduz componentes mas pode ampliar latência/indisponibilidade; assíncrono exige consistência eventual, idempotência e operação adicional.
+Nenhum sistema externo é declarado e o requisito de notificações não está aprovado. A omissão é a opção mais simples e reversível; síncrono amplia latência/indisponibilidade e assíncrono exige idempotência e operação adicional.
 
 ## Consequências positivas
 
@@ -36,8 +35,8 @@ Nenhum sistema externo é declarado. Síncrono reduz componentes mas pode amplia
 
 ## Consequências negativas
 
-- Se notificações forem necessárias, usuário não recebe informação fora do sistema até decisão/implementação.
-- Padrão assíncrono requer persistência de entrega e operação de fila/worker.
+- Nenhuma notificação externa será enviada no baseline.
+- Eventual integração futura exigirá decisão específica de entrega e tratamento de falhas.
 
 ## Riscos
 
@@ -47,4 +46,4 @@ Nenhum sistema externo é declarado. Síncrono reduz componentes mas pode amplia
 
 ## Estratégia de validação
 
-Decidir Q-13; elaborar contrato de evento/canal e análise de dados. Se aprovada integração HTTP, simular timeout, 5xx, duplicação e recuperação com WireMock; testar que uma falha não viola a invariante transacional. Usar outbox apenas se o requisito de entrega justificar.
+Confirmar que o baseline não contém dependências nem fluxos de notificação; se uma integração for aprovada no futuro, testar timeout, 5xx, duplicação e recuperação com WireMock, além da preservação da invariante transacional.
