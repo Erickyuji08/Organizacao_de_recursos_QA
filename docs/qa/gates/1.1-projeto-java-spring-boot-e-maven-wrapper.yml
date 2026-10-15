@@ -1,0 +1,9 @@
+schema: 1
+story: '1.1'
+gate: PASS
+status_reason: 'AC1–AC9 foram demonstrados no escopo da Story 1.1; `./mvnw -B verify` passou com JDK 21.0.12.1 e não foram encontrados problemas críticos ou altos.'
+reviewer: 'Quinn'
+reviewed_revision: 'commit:a75d5c0daa4f0d8cde3e5c5129b2987a3651d2ef'
+updated: '2026-10-15T00:55:39Z'
+top_issues: []
+waiver: { active: false }
